@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:reimagined_spoon/features/foods/models/food_model.dart';
+import 'package:get/get.dart';
 
 class CreateProductPage extends StatefulWidget {
   const CreateProductPage({super.key});
@@ -87,9 +89,16 @@ class _CreateProductPageState extends State<CreateProductPage> {
                   return;
                 }
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Product created successfully!")),
+                final food = FoodModel(
+                  name: productNameCont.text.trim(),
+                  calories: double.parse(caloriesCont.text.trim()),
                 );
+
+                Get.back(result: food);
+
+                // ScaffoldMessenger.of(context).showSnackBar(
+                //   SnackBar(content: Text("Product created successfully!")),
+                // );
               },
               child: Text("Create Product"),
             ),
