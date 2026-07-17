@@ -15,13 +15,21 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(title: Text("Home Page")),
       body: SafeArea(
-        child: Column(
-          children: [
-            ElevatedButton(
-              onPressed: () => Get.toNamed(AppRoutes.createProduct),
-              child: Text("Create Product"),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              ElevatedButton(
+                style: ButtonStyle(
+                  backgroundColor: WidgetStateProperty.all(Colors.blue),
+                ),
+                onPressed: () => Get.toNamed(AppRoutes.createProduct),
+                child: Text("Create Product", style: TextStyle(
+                  color: Colors.white,
+                ),),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -34,22 +34,38 @@ class _CreateProductPageState extends State<CreateProductPage> {
                     controller: productNameCont,
                     decoration: InputDecoration(hintText: "eg;, Apple", labelText: "Product Name"),
                     validator: (String? value) {
-                      if (value == null || value.isEmpty) {
+                      final input = value?.trim();
+
+                      if (input == null || input.isEmpty) {
                         return "Please enter the product name";
                       }
                       return null;
-                    }
+                    },
                   ),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: caloriesCont,
                     decoration: InputDecoration(hintText: "eg;, 300", labelText: "Calories"),
-                      validator: (String? value) {
-                        if (value == null || value.isEmpty) {
-                          return "Please enter the calories";
-                        }
-                        return null;
+                    validator: (String? value) {
+                      final input = value?.trim() ?? '';
+
+                      if (input.isEmpty) {
+                        return "Please enter the calories";
                       }
+
+                      final calories = double.tryParse(input);
+
+                      if (calories == null || !calories.isFinite) {
+                        return 'Calories must be a valid number';
+                      }
+
+                      if (calories < 0) {
+                        return 'Calories cannot be negative';
+                      }
+
+                      return null;
+                    },
+                    keyboardType: TextInputType.numberWithOptions(decimal: true),
                   ),
                   const SizedBox(height: 8),
                 ],
@@ -61,7 +77,23 @@ class _CreateProductPageState extends State<CreateProductPage> {
       bottomNavigationBar: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
-          children: [ElevatedButton(onPressed: () {}, child: Text("Create Product"))],
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                final isValid = _formKey.currentState?.validate() ?? false;
+
+                if (!isValid) {
+                  return;
+                }
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Product created successfully!")),
+                );
+              },
+              child: Text("Create Product"),
+            ),
+          ],
         ),
       ),
     );
