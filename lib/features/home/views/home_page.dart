@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import 'package:reimagined_spoon/core/design_system/design_system.dart';
 import 'package:reimagined_spoon/features/foods/controllers/food_controller.dart';
 import 'package:reimagined_spoon/features/foods/models/food_model.dart';
 import 'package:reimagined_spoon/navigation/app_routes.dart';
@@ -17,18 +18,18 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Home Page")),
+      appBar: AppBar(title: const Text('Foods')),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.space16),
           child: Column(
             children: [
-              ElevatedButton(
-                style: ButtonStyle(backgroundColor: WidgetStateProperty.all(Colors.blue)),
+              AppButton.primary(
+                text: 'Create Food',
+                icon: const Icon(Icons.add),
+                isExpanded: true,
                 onPressed: () async {
-                  final food = await Get.toNamed(
-                    AppRoutes.createProduct,
-                  );
+                  final food = await Get.toNamed(AppRoutes.createProduct);
 
                   if (!mounted || food is! FoodModel) {
                     return;
@@ -36,30 +37,37 @@ class _HomePageState extends State<HomePage> {
 
                   foodController.addFood(food);
                 },
-                child: Text("Create Product", style: TextStyle(color: Colors.white)),
               ),
 
-              SizedBox(height: 32),
+              const SizedBox(height: AppSpacing.space24),
               Expanded(
                 child: Obx(() {
                   final foods = foodController.foods;
 
                   if (foods.isEmpty) {
-                    return const Center(child: Text('No food has been added yet'));
+                    return const AppEmptyState(
+                      title: 'No food yet',
+                      description:
+                          'Create your first food to start tracking nutrition.',
+                      icon: Icons.restaurant_outlined,
+                    );
                   }
 
-                  return ListView.builder(
+                  return ListView.separated(
                     itemCount: foods.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: AppSpacing.space8),
                     itemBuilder: (BuildContext context, int index) {
                       final food = foods[index];
 
-                      return ListTile(
-                        title: Text(food.name),
-                        subtitle: Text('${food.calories} kcal'),
+                      return AppListTile(
+                        title: food.name,
+                        subtitle: '${food.calories} kcal per serving',
+                        leading: const Icon(Icons.local_dining_outlined),
                       );
                     },
                   );
-                })
+                }),
               ),
             ],
           ),

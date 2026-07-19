@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:reimagined_spoon/core/design_system/design_system.dart';
 import 'package:reimagined_spoon/navigation/app_pages.dart';
 import 'package:reimagined_spoon/navigation/app_routes.dart';
 
@@ -13,10 +14,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-      ),
+      title: 'Nutrition Tracker',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: ThemeMode.system,
       getPages: AppPages.pages,
       initialRoute: AppRoutes.home,
     );
