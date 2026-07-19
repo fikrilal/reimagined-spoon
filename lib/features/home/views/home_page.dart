@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import 'package:reimagined_spoon/features/foods/controllers/food_controller.dart';
 import 'package:reimagined_spoon/features/foods/models/food_model.dart';
 import 'package:reimagined_spoon/navigation/app_routes.dart';
 
@@ -11,7 +12,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final List<FoodModel> _foods = [];
+  final foodController = Get.find<FoodController>();
 
   @override
   Widget build(BuildContext context) {
@@ -25,34 +26,40 @@ class _HomePageState extends State<HomePage> {
               ElevatedButton(
                 style: ButtonStyle(backgroundColor: WidgetStateProperty.all(Colors.blue)),
                 onPressed: () async {
-                  final food = await Get.toNamed(AppRoutes.createProduct);
+                  final food = await Get.toNamed(
+                    AppRoutes.createProduct,
+                  );
 
-                  if (!mounted || food == null) {
+                  if (!mounted || food is! FoodModel) {
                     return;
                   }
 
-                  setState(() {
-                    _foods.add(food);
-                  });
+                  foodController.addFood(food);
                 },
                 child: Text("Create Product", style: TextStyle(color: Colors.white)),
               ),
 
               SizedBox(height: 32),
               Expanded(
-                child: _foods.isEmpty
-                    ? const Center(child: Text('No food has been added yet'))
-                    : ListView.builder(
-                        itemCount: _foods.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          final food = _foods[index];
+                child: Obx(() {
+                  final foods = foodController.foods;
 
-                          return ListTile(
-                            title: Text(food.name),
-                            subtitle: Text('${food.calories} kcal'),
-                          );
-                        },
-                      ),
+                  if (foods.isEmpty) {
+                    return const Center(child: Text('No food has been added yet'));
+                  }
+
+                  return ListView.builder(
+                    itemCount: foods.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final food = foods[index];
+
+                      return ListTile(
+                        title: Text(food.name),
+                        subtitle: Text('${food.calories} kcal'),
+                      );
+                    },
+                  );
+                })
               ),
             ],
           ),

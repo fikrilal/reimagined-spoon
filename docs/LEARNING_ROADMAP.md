@@ -85,6 +85,9 @@ Move the in-memory food workflow to deliberate GetX state management.
 
 ## Day 3: SQLite Fundamentals
 
+The detailed, time-boxed curriculum and query exercises are documented in the
+[SQLite Intensive Plan](SQLITE_LEARNING_PLAN.md).
+
 ### Topics
 
 - Relational schema design

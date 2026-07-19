@@ -9,10 +9,9 @@ lifecycle, asynchronous operations, relational data, and local persistence.
 
 ## Status
 
-Planning and project setup.
-
-GetX and SQLite dependencies have not been selected or added yet. Choosing and
-explaining those dependencies is part of the learning exercise.
+The Flutter in-memory workflow is complete. The application is being migrated
+from local `setState` ownership to a GetX controller and reactive list. GetX and
+`sqflite` have been added; SQLite schema and persistence are not implemented yet.
 
 ## Core Features
 
@@ -81,6 +80,7 @@ responsibilities require them.
 
 - [Project Brief](docs/PROJECT_BRIEF.md)
 - [Learning Roadmap](docs/LEARNING_ROADMAP.md)
+- [SQLite Intensive Plan](docs/SQLITE_LEARNING_PLAN.md)
 - [Engineering Journal](docs/ENGINEERING_JOURNAL.md)
 - [Engineering Decisions](docs/DECISIONS.md)
 
