@@ -1,19 +1,16 @@
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart' as p;
+import 'package:drift/drift.dart';
+import 'package:drift_flutter/drift_flutter.dart';
+import 'package:reimagined_spoon/features/foods/data/local/tables/foods.dart';
+import '../../features/foods/data/local/daos/food_dao.dart';
 
-typedef DatabaseTask = Future<void> Function(Database database);
+part 'app_database.g.dart';
 
-class AppDatabase {
-  static const _databaseName = 'reimagined_spoon.db';
-  static const _databaseVersion = 1;
+@DriftDatabase(tables: [Foods], daos: [FoodDao])
+class AppDatabase extends _$AppDatabase {
+  AppDatabase() : super(driftDatabase(name: 'reimagined_spoon'));
 
-  AppDatabase._();
+  AppDatabase.forTesting(super.executor);
 
-  static final AppDatabase instance = AppDatabase._();
-
-  final List<DatabaseTask> _onCreateTask = [];
-
-  Future<Database>? _databaseFuture;
-
-
+  @override
+  int get schemaVersion => 1;
 }
