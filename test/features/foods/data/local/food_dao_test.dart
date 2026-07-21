@@ -19,7 +19,7 @@ void main() {
       updatedAt: timeStamp,
     );
 
-    final foods = await database.foodDao.getAllFoods();
+    final foods = await database.foodDao.getActiveFoods();
 
     expect(insertId, 1);
     expect(foods, hasLength(1));
@@ -31,6 +31,7 @@ void main() {
     expect(food.caloriesPerServing, 52.0);
     expect(food.createdAt.isAtSameMomentAs(timeStamp), isTrue);
     expect(food.updatedAt.isAtSameMomentAs(timeStamp), isTrue);
+    expect(food.deletedAt, isNull);
   });
 
   test('returns foods ordered by name ascending', () async {
@@ -50,7 +51,7 @@ void main() {
       updatedAt: timeStamp,
     );
 
-    final foods = await database.foodDao.getAllFoods();
+    final foods = await database.foodDao.getActiveFoods();
 
     final foodNames = foods.map((food) => food.name).toList();
 
@@ -77,7 +78,7 @@ void main() {
       throwsA(isA<SqliteException>()),
     );
 
-    final foods = await database.foodDao.getAllFoods();
+    final foods = await database.foodDao.getActiveFoods();
     expect(foods, hasLength(1));
     expect(foods.single.name, 'Apple');
   });

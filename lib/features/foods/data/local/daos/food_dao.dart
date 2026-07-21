@@ -24,8 +24,10 @@ class FoodDao extends DatabaseAccessor<AppDatabase> with _$FoodDaoMixin {
     );
   }
 
-  Future<List<Food>> getAllFoods() {
-    final query = select(foods)..orderBy([(table) => OrderingTerm.asc(table.name)]);
+  Future<List<Food>> getActiveFoods() {
+    final query = select(foods)
+      ..where((food) => food.deletedAt.isNull())
+      ..orderBy([(table) => OrderingTerm.asc(table.name)]);
     return query.get();
   }
 }
