@@ -77,6 +77,20 @@ class $FoodsTable extends Foods with TableInfo<$FoodsTable, Food> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _servingMeta = const VerificationMeta(
+    'serving',
+  );
+  @override
+  late final GeneratedColumn<String> serving = GeneratedColumn<String>(
+    'serving',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints:
+        'NOT NULL DEFAULT \'serving\' CHECK (serving = trim(serving) AND length(serving) > 0)',
+    defaultValue: const CustomExpression('\'serving\''),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -85,6 +99,7 @@ class $FoodsTable extends Foods with TableInfo<$FoodsTable, Food> {
     createdAt,
     updatedAt,
     deletedAt,
+    serving,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -142,6 +157,12 @@ class $FoodsTable extends Foods with TableInfo<$FoodsTable, Food> {
         deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
       );
     }
+    if (data.containsKey('serving')) {
+      context.handle(
+        _servingMeta,
+        serving.isAcceptableOrUnknown(data['serving']!, _servingMeta),
+      );
+    }
     return context;
   }
 
@@ -175,6 +196,10 @@ class $FoodsTable extends Foods with TableInfo<$FoodsTable, Food> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}deleted_at'],
       ),
+      serving: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}serving'],
+      )!,
     );
   }
 
@@ -191,6 +216,7 @@ class Food extends DataClass implements Insertable<Food> {
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? deletedAt;
+  final String serving;
   const Food({
     required this.id,
     required this.name,
@@ -198,6 +224,7 @@ class Food extends DataClass implements Insertable<Food> {
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
+    required this.serving,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -210,6 +237,7 @@ class Food extends DataClass implements Insertable<Food> {
     if (!nullToAbsent || deletedAt != null) {
       map['deleted_at'] = Variable<DateTime>(deletedAt);
     }
+    map['serving'] = Variable<String>(serving);
     return map;
   }
 
@@ -223,6 +251,7 @@ class Food extends DataClass implements Insertable<Food> {
       deletedAt: deletedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(deletedAt),
+      serving: Value(serving),
     );
   }
 
@@ -240,6 +269,7 @@ class Food extends DataClass implements Insertable<Food> {
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      serving: serializer.fromJson<String>(json['serving']),
     );
   }
   @override
@@ -252,6 +282,7 @@ class Food extends DataClass implements Insertable<Food> {
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'serving': serializer.toJson<String>(serving),
     };
   }
 
@@ -262,6 +293,7 @@ class Food extends DataClass implements Insertable<Food> {
     DateTime? createdAt,
     DateTime? updatedAt,
     Value<DateTime?> deletedAt = const Value.absent(),
+    String? serving,
   }) => Food(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -269,6 +301,7 @@ class Food extends DataClass implements Insertable<Food> {
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    serving: serving ?? this.serving,
   );
   Food copyWithCompanion(FoodsCompanion data) {
     return Food(
@@ -280,6 +313,7 @@ class Food extends DataClass implements Insertable<Food> {
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      serving: data.serving.present ? data.serving.value : this.serving,
     );
   }
 
@@ -291,7 +325,8 @@ class Food extends DataClass implements Insertable<Food> {
           ..write('caloriesPerServing: $caloriesPerServing, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('deletedAt: $deletedAt')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('serving: $serving')
           ..write(')'))
         .toString();
   }
@@ -304,6 +339,7 @@ class Food extends DataClass implements Insertable<Food> {
     createdAt,
     updatedAt,
     deletedAt,
+    serving,
   );
   @override
   bool operator ==(Object other) =>
@@ -314,7 +350,8 @@ class Food extends DataClass implements Insertable<Food> {
           other.caloriesPerServing == this.caloriesPerServing &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
-          other.deletedAt == this.deletedAt);
+          other.deletedAt == this.deletedAt &&
+          other.serving == this.serving);
 }
 
 class FoodsCompanion extends UpdateCompanion<Food> {
@@ -324,6 +361,7 @@ class FoodsCompanion extends UpdateCompanion<Food> {
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<DateTime?> deletedAt;
+  final Value<String> serving;
   const FoodsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -331,6 +369,7 @@ class FoodsCompanion extends UpdateCompanion<Food> {
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
+    this.serving = const Value.absent(),
   });
   FoodsCompanion.insert({
     this.id = const Value.absent(),
@@ -339,6 +378,7 @@ class FoodsCompanion extends UpdateCompanion<Food> {
     required DateTime createdAt,
     required DateTime updatedAt,
     this.deletedAt = const Value.absent(),
+    this.serving = const Value.absent(),
   }) : name = Value(name),
        caloriesPerServing = Value(caloriesPerServing),
        createdAt = Value(createdAt),
@@ -350,6 +390,7 @@ class FoodsCompanion extends UpdateCompanion<Food> {
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? deletedAt,
+    Expression<String>? serving,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -359,6 +400,7 @@ class FoodsCompanion extends UpdateCompanion<Food> {
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (deletedAt != null) 'deleted_at': deletedAt,
+      if (serving != null) 'serving': serving,
     });
   }
 
@@ -369,6 +411,7 @@ class FoodsCompanion extends UpdateCompanion<Food> {
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<DateTime?>? deletedAt,
+    Value<String>? serving,
   }) {
     return FoodsCompanion(
       id: id ?? this.id,
@@ -377,6 +420,7 @@ class FoodsCompanion extends UpdateCompanion<Food> {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
+      serving: serving ?? this.serving,
     );
   }
 
@@ -401,6 +445,9 @@ class FoodsCompanion extends UpdateCompanion<Food> {
     if (deletedAt.present) {
       map['deleted_at'] = Variable<DateTime>(deletedAt.value);
     }
+    if (serving.present) {
+      map['serving'] = Variable<String>(serving.value);
+    }
     return map;
   }
 
@@ -412,7 +459,8 @@ class FoodsCompanion extends UpdateCompanion<Food> {
           ..write('caloriesPerServing: $caloriesPerServing, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('deletedAt: $deletedAt')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('serving: $serving')
           ..write(')'))
         .toString();
   }
@@ -1002,6 +1050,7 @@ typedef $$FoodsTableCreateCompanionBuilder =
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<DateTime?> deletedAt,
+      Value<String> serving,
     });
 typedef $$FoodsTableUpdateCompanionBuilder =
     FoodsCompanion Function({
@@ -1011,6 +1060,7 @@ typedef $$FoodsTableUpdateCompanionBuilder =
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<DateTime?> deletedAt,
+      Value<String> serving,
     });
 
 final class $$FoodsTableReferences
@@ -1071,6 +1121,11 @@ class $$FoodsTableFilterComposer extends Composer<_$AppDatabase, $FoodsTable> {
 
   ColumnFilters<DateTime> get deletedAt => $composableBuilder(
     column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get serving => $composableBuilder(
+    column: $table.serving,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1138,6 +1193,11 @@ class $$FoodsTableOrderingComposer
     column: $table.deletedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get serving => $composableBuilder(
+    column: $table.serving,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$FoodsTableAnnotationComposer
@@ -1168,6 +1228,9 @@ class $$FoodsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get deletedAt =>
       $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get serving =>
+      $composableBuilder(column: $table.serving, builder: (column) => column);
 
   Expression<T> mealEntriesRefs<T extends Object>(
     Expression<T> Function($$MealEntriesTableAnnotationComposer a) f,
@@ -1229,6 +1292,7 @@ class $$FoodsTableTableManager
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> serving = const Value.absent(),
               }) => FoodsCompanion(
                 id: id,
                 name: name,
@@ -1236,6 +1300,7 @@ class $$FoodsTableTableManager
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
+                serving: serving,
               ),
           createCompanionCallback:
               ({
@@ -1245,6 +1310,7 @@ class $$FoodsTableTableManager
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> serving = const Value.absent(),
               }) => FoodsCompanion.insert(
                 id: id,
                 name: name,
@@ -1252,6 +1318,7 @@ class $$FoodsTableTableManager
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
+                serving: serving,
               ),
           withReferenceMapper: (p0) => p0
               .map(

@@ -17,4 +17,9 @@ class Foods extends Table {
   DateTimeColumn get updatedAt => dateTime()();
 
   DateTimeColumn get deletedAt => dateTime().nullable()();
+
+  TextColumn get serving => text().customConstraint(
+    "NOT NULL DEFAULT 'serving' "
+    "CHECK (serving = trim(serving) AND length(serving) > 0)",
+  )();
 }

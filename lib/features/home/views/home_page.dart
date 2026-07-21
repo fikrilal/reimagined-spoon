@@ -85,7 +85,7 @@ class _HomePageState extends State<HomePage> {
 
                       return AppListTile(
                         title: food.name,
-                        subtitle: '${food.caloriesPerServing} kcal per serving',
+                        subtitle: '${food.caloriesPerServing} kcal per ${food.serving}',
                         leading: const Icon(Icons.local_dining_outlined),
                       );
                     },

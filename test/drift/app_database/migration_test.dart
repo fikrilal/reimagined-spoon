@@ -10,6 +10,7 @@ import 'generated/schema_v1.dart' as v1;
 import 'generated/schema_v2.dart' as v2;
 import 'generated/schema_v3.dart' as v3;
 import 'generated/schema_v4.dart' as v4;
+import 'generated/schema_v5.dart' as v5;
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -147,4 +148,75 @@ void main() {
       newVersion: 4,
     );
   });
+
+  test(
+    'migration from v4 to v5 backfills serving and preserves data',
+    () async {
+      final oldFoodsData = <v4.FoodsData>[
+        const v4.FoodsData(
+          id: 1,
+          name: 'Apple',
+          caloriesPerServing: 100,
+          createdAt: 1000,
+          updatedAt: 1000,
+        ),
+      ];
+
+      final oldMealEntriesData = <v4.MealEntriesData>[
+        const v4.MealEntriesData(
+          id: 1,
+          foodId: 1,
+          foodNameSnapshot: 'Apple',
+          caloriesPerServingSnapshot: 100,
+          servingQuantity: 1,
+          mealCategory: 'breakfast',
+          consumedAt: 2000,
+          createdAt: 1000,
+        ),
+      ];
+
+      final expectedFoodsData = <v5.FoodsData>[
+        const v5.FoodsData(
+          id: 1,
+          name: 'Apple',
+          caloriesPerServing: 100,
+          createdAt: 1000,
+          updatedAt: 1000,
+          serving: 'serving',
+        ),
+      ];
+
+      final expectedMealEntriesData = <v5.MealEntriesData>[
+        const v5.MealEntriesData(
+          id: 1,
+          foodId: 1,
+          foodNameSnapshot: 'Apple',
+          caloriesPerServingSnapshot: 100,
+          servingQuantity: 1,
+          mealCategory: 'breakfast',
+          consumedAt: 2000,
+          createdAt: 1000,
+        ),
+      ];
+
+      await verifier.testWithDataIntegrity(
+        oldVersion: 4,
+        newVersion: 5,
+        createOld: v4.DatabaseAtV4.new,
+        createNew: v5.DatabaseAtV5.new,
+        openTestedDatabase: AppDatabase.new,
+        createItems: (batch, oldDb) {
+          batch.insertAll(oldDb.foods, oldFoodsData);
+          batch.insertAll(oldDb.mealEntries, oldMealEntriesData);
+        },
+        validateItems: (newDb) async {
+          final actualFoods = await newDb.select(newDb.foods).get();
+          final actualMealEntries = await newDb.select(newDb.mealEntries).get();
+
+          expect(actualFoods, expectedFoodsData);
+          expect(actualMealEntries, expectedMealEntriesData);
+        },
+      );
+    },
+  );
 }
