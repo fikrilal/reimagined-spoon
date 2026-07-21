@@ -967,13 +967,21 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $FoodsTable foods = $FoodsTable(this);
   late final $MealEntriesTable mealEntries = $MealEntriesTable(this);
+  late final Index mealEntriesConsumedAt = Index(
+    'meal_entries_consumed_at',
+    'CREATE INDEX meal_entries_consumed_at ON meal_entries (consumed_at)',
+  );
   late final FoodDao foodDao = FoodDao(this as AppDatabase);
   late final MealEntryDao mealEntryDao = MealEntryDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [foods, mealEntries];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    foods,
+    mealEntries,
+    mealEntriesConsumedAt,
+  ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
     WritePropagation(

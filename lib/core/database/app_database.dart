@@ -15,15 +15,20 @@ class AppDatabase extends _$AppDatabase {
 
   AppDatabase.forTesting(super.executor);
 
+  OpeningDetails? _lastOpeningDetails;
+
+  OpeningDetails? get lastOpeningDetails => _lastOpeningDetails;
+
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
     return MigrationStrategy(
       onUpgrade: _schemaUpgrade,
-      beforeOpen: (_) async {
+      beforeOpen: (details) async {
         await customStatement('PRAGMA foreign_keys = ON');
+        _lastOpeningDetails = details;
       },
     );
   }
@@ -36,6 +41,9 @@ extension Migrations on GeneratedDatabase {
     },
     from2To3: (migrator, schema) async {
       await migrator.addColumn(schema.foods, schema.foods.deletedAt);
+    },
+    from3To4: (migrator, schema) async {
+      await migrator.createIndex(schema.mealEntriesConsumedAt);
     },
   );
 }

@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:reimagined_spoon/features/foods/data/local/tables/foods.dart';
 
+@TableIndex(name: 'meal_entries_consumed_at', columns: {#consumedAt})
 class MealEntries extends Table {
   IntColumn get id => integer().autoIncrement()();
 
