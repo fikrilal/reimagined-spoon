@@ -20,7 +20,7 @@ class AppDatabase extends _$AppDatabase {
   OpeningDetails? get lastOpeningDetails => _lastOpeningDetails;
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration {
@@ -47,6 +47,9 @@ extension Migrations on GeneratedDatabase {
     },
     from4To5: (migrator, schema) async {
       await migrator.addColumn(schema.foods, schema.foods.serving);
+    },
+    from5To6: (migrator, schema) async {
+      await migrator.renameColumn(schema.foods, 'serving', schema.foods.servingLabel);
     },
   );
 }

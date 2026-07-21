@@ -18,8 +18,8 @@ class Foods extends Table {
 
   DateTimeColumn get deletedAt => dateTime().nullable()();
 
-  TextColumn get serving => text().customConstraint(
+  TextColumn get servingLabel => text().customConstraint(
     "NOT NULL DEFAULT 'serving' "
-    "CHECK (serving = trim(serving) AND length(serving) > 0)",
+    "CHECK (serving_label = trim(serving_label) AND length(serving_label) > 0)",
   )();
 }

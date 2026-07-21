@@ -32,7 +32,7 @@ void main() {
     expect(food.createdAt.isAtSameMomentAs(timeStamp), isTrue);
     expect(food.updatedAt.isAtSameMomentAs(timeStamp), isTrue);
     expect(food.deletedAt, isNull);
-    expect(food.serving, 'serving');
+    expect(food.servingLabel, 'serving');
   });
 
   test('returns foods ordered by name ascending', () async {
