@@ -13,6 +13,7 @@ class FoodDao extends DatabaseAccessor<AppDatabase> with _$FoodDaoMixin {
     required double caloriesPerServing,
     required DateTime createdAt,
     required DateTime updatedAt,
+    required DateTime deletedAt,
   }) {
     return into(foods).insert(
       FoodsCompanion.insert(
@@ -20,6 +21,7 @@ class FoodDao extends DatabaseAccessor<AppDatabase> with _$FoodDaoMixin {
         caloriesPerServing: caloriesPerServing,
         createdAt: createdAt,
         updatedAt: updatedAt,
+        deletedAt: deletedAt,
       ),
     );
   }

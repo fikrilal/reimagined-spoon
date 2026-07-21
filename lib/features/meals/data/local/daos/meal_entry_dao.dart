@@ -9,28 +9,6 @@ part 'meal_entry_dao.g.dart';
 class MealEntryDao extends DatabaseAccessor<AppDatabase> with _$MealEntryDaoMixin {
   MealEntryDao(super.database);
 
-  Future<int> insertMealEntry({
-    required int foodId,
-    required String foodNameSnapshot,
-    required double caloriesPerServingSnapshot,
-    required double servingQuantity,
-    required String mealCategory,
-    required DateTime consumedAt,
-    required DateTime createdAt,
-  }) {
-    return into(mealEntries).insert(
-      MealEntriesCompanion.insert(
-        foodId: Value(foodId),
-        foodNameSnapshot: foodNameSnapshot,
-        caloriesPerServingSnapshot: caloriesPerServingSnapshot,
-        servingQuantity: servingQuantity,
-        mealCategory: mealCategory,
-        consumedAt: consumedAt,
-        createdAt: createdAt,
-      ),
-    );
-  }
-
   Future<int> insertMealFromFood({
     required int foodId,
     required double servingQuantity,
@@ -59,5 +37,30 @@ class MealEntryDao extends DatabaseAccessor<AppDatabase> with _$MealEntryDaoMixi
         ),
       );
     });
+  }
+
+  Future<List<MealEntry>> getMealEntriesBetween({
+    required DateTime startInclusive,
+    required DateTime endExclusive,
+  }) {
+    final startUtc = startInclusive.toUtc();
+    final endUtc = endExclusive.toUtc();
+
+    if (!startUtc.isBefore(endUtc)) {
+      throw ArgumentError('startInclusive must be before endExclusive');
+    }
+
+    final query = select(mealEntries)
+      ..where(
+        (table) =>
+            table.consumedAt.isBiggerOrEqualValue(startUtc) &
+            table.consumedAt.isSmallerThanValue(endUtc),
+      )
+      ..orderBy([
+        (table) => OrderingTerm.desc(table.consumedAt),
+        (table) => OrderingTerm.desc(table.id),
+      ]);
+
+    return query.get();
   }
 }

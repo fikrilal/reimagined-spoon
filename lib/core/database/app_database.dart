@@ -17,7 +17,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -35,5 +35,10 @@ extension Migrations on GeneratedDatabase {
     from1To2: (migrator, schema) async {
       await migrator.createTable(schema.mealEntries);
     },
+      from2To3: (migrator, schema) async {
+      await migrator.createTable(schema.foods);
+    }, from3To4: (Migrator m, Schema4 schema) {
+      return m.addColumn(schema.foods, schema.foods.updatedAt);
+    }
   );
 }
