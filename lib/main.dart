@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:reimagined_spoon/core/bindings/app_binding.dart';
 import 'package:reimagined_spoon/core/design_system/design_system.dart';
 import 'package:reimagined_spoon/navigation/app_pages.dart';
 import 'package:reimagined_spoon/navigation/app_routes.dart';
@@ -21,6 +22,7 @@ class MyApp extends StatelessWidget {
       themeMode: ThemeMode.system,
       getPages: AppPages.pages,
       initialRoute: AppRoutes.home,
+      initialBinding: AppBinding(),
     );
   }
 }

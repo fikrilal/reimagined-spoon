@@ -35,7 +35,7 @@ class _HomePageState extends State<HomePage> {
                     return;
                   }
 
-                  foodController.addFood(food);
+                  await foodController.addFood(food);
                 },
               ),
 
@@ -62,7 +62,7 @@ class _HomePageState extends State<HomePage> {
 
                       return AppListTile(
                         title: food.name,
-                        subtitle: '${food.calories} kcal per serving',
+                        subtitle: '${food.caloriesPerServing} kcal per serving',
                         leading: const Icon(Icons.local_dining_outlined),
                       );
                     },
