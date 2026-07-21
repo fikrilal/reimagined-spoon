@@ -55,10 +55,10 @@ class Foods extends Table with TableInfo<Foods, FoodsData> {
   late final GeneratedColumn<int> deletedAt = GeneratedColumn<int>(
     'deleted_at',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.int,
-    requiredDuringInsert: true,
-    $customConstraints: 'NOT NULL',
+    requiredDuringInsert: false,
+    $customConstraints: 'NULL',
   );
   @override
   List<GeneratedColumn> get $columns => [
@@ -103,7 +103,7 @@ class Foods extends Table with TableInfo<Foods, FoodsData> {
       deletedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}deleted_at'],
-      )!,
+      ),
     );
   }
 
@@ -122,14 +122,14 @@ class FoodsData extends DataClass implements Insertable<FoodsData> {
   final double caloriesPerServing;
   final int createdAt;
   final int updatedAt;
-  final int deletedAt;
+  final int? deletedAt;
   const FoodsData({
     required this.id,
     required this.name,
     required this.caloriesPerServing,
     required this.createdAt,
     required this.updatedAt,
-    required this.deletedAt,
+    this.deletedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -139,7 +139,9 @@ class FoodsData extends DataClass implements Insertable<FoodsData> {
     map['calories_per_serving'] = Variable<double>(caloriesPerServing);
     map['created_at'] = Variable<int>(createdAt);
     map['updated_at'] = Variable<int>(updatedAt);
-    map['deleted_at'] = Variable<int>(deletedAt);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<int>(deletedAt);
+    }
     return map;
   }
 
@@ -150,7 +152,9 @@ class FoodsData extends DataClass implements Insertable<FoodsData> {
       caloriesPerServing: Value(caloriesPerServing),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
-      deletedAt: Value(deletedAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
     );
   }
 
@@ -167,7 +171,7 @@ class FoodsData extends DataClass implements Insertable<FoodsData> {
       ),
       createdAt: serializer.fromJson<int>(json['createdAt']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
-      deletedAt: serializer.fromJson<int>(json['deletedAt']),
+      deletedAt: serializer.fromJson<int?>(json['deletedAt']),
     );
   }
   @override
@@ -179,7 +183,7 @@ class FoodsData extends DataClass implements Insertable<FoodsData> {
       'caloriesPerServing': serializer.toJson<double>(caloriesPerServing),
       'createdAt': serializer.toJson<int>(createdAt),
       'updatedAt': serializer.toJson<int>(updatedAt),
-      'deletedAt': serializer.toJson<int>(deletedAt),
+      'deletedAt': serializer.toJson<int?>(deletedAt),
     };
   }
 
@@ -189,14 +193,14 @@ class FoodsData extends DataClass implements Insertable<FoodsData> {
     double? caloriesPerServing,
     int? createdAt,
     int? updatedAt,
-    int? deletedAt,
+    Value<int?> deletedAt = const Value.absent(),
   }) => FoodsData(
     id: id ?? this.id,
     name: name ?? this.name,
     caloriesPerServing: caloriesPerServing ?? this.caloriesPerServing,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
-    deletedAt: deletedAt ?? this.deletedAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
   );
   FoodsData copyWithCompanion(FoodsCompanion data) {
     return FoodsData(
@@ -251,7 +255,7 @@ class FoodsCompanion extends UpdateCompanion<FoodsData> {
   final Value<double> caloriesPerServing;
   final Value<int> createdAt;
   final Value<int> updatedAt;
-  final Value<int> deletedAt;
+  final Value<int?> deletedAt;
   const FoodsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -266,12 +270,11 @@ class FoodsCompanion extends UpdateCompanion<FoodsData> {
     required double caloriesPerServing,
     required int createdAt,
     required int updatedAt,
-    required int deletedAt,
+    this.deletedAt = const Value.absent(),
   }) : name = Value(name),
        caloriesPerServing = Value(caloriesPerServing),
        createdAt = Value(createdAt),
-       updatedAt = Value(updatedAt),
-       deletedAt = Value(deletedAt);
+       updatedAt = Value(updatedAt);
   static Insertable<FoodsData> custom({
     Expression<int>? id,
     Expression<String>? name,
@@ -297,7 +300,7 @@ class FoodsCompanion extends UpdateCompanion<FoodsData> {
     Value<double>? caloriesPerServing,
     Value<int>? createdAt,
     Value<int>? updatedAt,
-    Value<int>? deletedAt,
+    Value<int?>? deletedAt,
   }) {
     return FoodsCompanion(
       id: id ?? this.id,

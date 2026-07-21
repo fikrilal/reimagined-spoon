@@ -17,7 +17,6 @@ void main() {
       caloriesPerServing: 52,
       createdAt: timeStamp,
       updatedAt: timeStamp,
-      deletedAt: timeStamp,
     );
 
     final foods = await database.foodDao.getAllFoods();
@@ -42,7 +41,6 @@ void main() {
       caloriesPerServing: 89.0,
       createdAt: timeStamp,
       updatedAt: timeStamp,
-      deletedAt: timeStamp,
     );
 
     await database.foodDao.insertFood(
@@ -50,7 +48,6 @@ void main() {
       caloriesPerServing: 52.0,
       createdAt: timeStamp,
       updatedAt: timeStamp,
-      deletedAt: timeStamp,
     );
 
     final foods = await database.foodDao.getAllFoods();
@@ -68,7 +65,6 @@ void main() {
       caloriesPerServing: 52.0,
       createdAt: timeStamp,
       updatedAt: timeStamp,
-      deletedAt: timeStamp,
     );
 
     await expectLater(
@@ -77,7 +73,6 @@ void main() {
         caloriesPerServing: 52.0,
         createdAt: timeStamp,
         updatedAt: timeStamp,
-        deletedAt: timeStamp,
       ),
       throwsA(isA<SqliteException>()),
     );

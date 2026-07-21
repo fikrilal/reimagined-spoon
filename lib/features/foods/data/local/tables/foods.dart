@@ -16,5 +16,5 @@ class Foods extends Table {
 
   DateTimeColumn get updatedAt => dateTime()();
 
-  DateTimeColumn get deletedAt => dateTime()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
 }

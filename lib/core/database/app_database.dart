@@ -10,14 +10,13 @@ part 'app_database.g.dart';
 
 @DriftDatabase(tables: [Foods, MealEntries], daos: [FoodDao, MealEntryDao])
 class AppDatabase extends _$AppDatabase {
-
   AppDatabase([QueryExecutor? executor])
     : super(executor ?? driftDatabase(name: 'reimagined_spoon'));
 
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration {
@@ -35,10 +34,8 @@ extension Migrations on GeneratedDatabase {
     from1To2: (migrator, schema) async {
       await migrator.createTable(schema.mealEntries);
     },
-      from2To3: (migrator, schema) async {
-      await migrator.createTable(schema.foods);
-    }, from3To4: (Migrator m, Schema4 schema) {
-      return m.addColumn(schema.foods, schema.foods.updatedAt);
-    }
+    from2To3: (migrator, schema) async {
+      await migrator.addColumn(schema.foods, schema.foods.deletedAt);
+    },
   );
 }

@@ -96,7 +96,7 @@
             "name": "deleted_at",
             "getter_name": "deletedAt",
             "moor_type": "dateTime",
-            "nullable": false,
+            "nullable": true,
             "customConstraints": null,
             "default_dart": null,
             "default_client_dart": null,
@@ -271,7 +271,7 @@
       "sql": [
         {
           "dialect": "sqlite",
-          "sql": "CREATE TABLE IF NOT EXISTS \"foods\" (\"id\" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, \"name\" TEXT NOT NULL COLLATE NOCASE UNIQUE CHECK (name = trim(name) AND length(name) > 0), \"calories_per_serving\" REAL NOT NULL CHECK(\"calories_per_serving\" >= 0.0), \"created_at\" INTEGER NOT NULL, \"updated_at\" INTEGER NOT NULL, \"deleted_at\" INTEGER NOT NULL);"
+          "sql": "CREATE TABLE IF NOT EXISTS \"foods\" (\"id\" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, \"name\" TEXT NOT NULL COLLATE NOCASE UNIQUE CHECK (name = trim(name) AND length(name) > 0), \"calories_per_serving\" REAL NOT NULL CHECK(\"calories_per_serving\" >= 0.0), \"created_at\" INTEGER NOT NULL, \"updated_at\" INTEGER NOT NULL, \"deleted_at\" INTEGER NULL);"
         }
       ]
     },
