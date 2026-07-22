@@ -9,9 +9,18 @@ lifecycle, asynchronous operations, relational data, and local persistence.
 
 ## Status
 
-The Flutter in-memory workflow is complete. The application is being migrated
-from local `setState` ownership to a GetX controller and reactive list. GetX and
-`sqflite` have been added; SQLite schema and persistence are not implemented yet.
+Food creation and listing now use a GetX controller backed by Drift and SQLite.
+The database is at schema version 6 and includes foods, meal entries, soft
+deletion support, historical meal snapshots, and an index for consumption-time
+queries.
+
+Schema upgrades from versions 1 through 6 are covered by generated schema
+snapshots and migration tests. The version-5 to version-6 upgrade has also been
+verified by installing a newer release APK over an existing installation and
+confirming that persisted data survives.
+
+The next milestone is to complete food CRUD and search, then expose meal logging
+and daily aggregate queries through the application UI.
 
 ## Core Features
 
@@ -64,6 +73,26 @@ Run tests:
 flutter test
 ```
 
+Run the database migration tests only:
+
+```sh
+flutter test test/drift/app_database/migration_test.dart
+```
+
+Regenerate Drift code after changing Drift tables, DAOs, or database
+declarations:
+
+```sh
+dart run build_runner build --delete-conflicting-outputs
+```
+
+After intentionally changing the schema and incrementing `schemaVersion`,
+generate the new immutable schema snapshot and migration step once:
+
+```sh
+dart run drift_dev make-migrations
+```
+
 Run the application:
 
 ```sh
@@ -72,9 +101,22 @@ flutter run
 
 ## Project Structure
 
-Document the actual structure after the first implementation milestone. Do not
-design a large folder hierarchy in advance; add boundaries when concrete
-responsibilities require them.
+```text
+lib/
+├── core/
+│   ├── bindings/       # Application-level dependency registration
+│   ├── controllers/    # Cross-feature application state
+│   └── database/       # Drift database, generated code, and migration steps
+├── features/
+│   ├── foods/          # Food model, table, DAO, controller, and views
+│   ├── meals/          # Meal-entry table and DAO
+│   └── home/           # Current food-list screen
+└── navigation/         # GetX routes
+
+test/
+├── drift/              # Versioned schema snapshots and migration tests
+└── features/           # Focused DAO tests
+```
 
 ## Documentation
 

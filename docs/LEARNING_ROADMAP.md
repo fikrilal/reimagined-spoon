@@ -18,6 +18,35 @@ For each milestone:
 6. Review the result.
 7. Record lessons and open questions in the engineering journal.
 
+## Current Progress: 2026-07-22
+
+Completed:
+
+- Built the food form and list, then moved their state ownership to GetX.
+- Replaced in-memory food storage with Drift-backed SQLite persistence.
+- Designed related `foods` and `meal_entries` tables with constraints, a
+  nullable foreign key, historical snapshots, and soft deletion support.
+- Evolved the database from schema version 1 through version 6.
+- Generated immutable schema snapshots and tested every supported migration
+  path, including focused data-preservation cases.
+- Verified persistence across application restarts.
+- Verified a signed release APK upgrade by installing the newer APK over an
+  existing version and confirming that existing data survives.
+- Exposed Drift opening details in a temporary UI notice so an upgrade can be
+  observed during manual verification.
+
+Still required for the project scope:
+
+- Complete food lookup, update, soft-delete, and parameterized search behavior.
+- Connect meal-entry creation and daily range queries to the UI.
+- Derive daily calorie totals and category totals from persisted meal entries.
+- Add explicit loading, failure, and duplicate-submission behavior where needed.
+- Prove transaction rollback and inspect query plans for the existing index.
+
+The migration work went beyond the original stretch goal. The next useful
+learning step is query correctness and transaction behavior, not another schema
+version created only for practice.
+
 ## Day 1: Dart and Flutter Foundations
 
 ### Topics

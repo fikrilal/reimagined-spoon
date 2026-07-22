@@ -84,6 +84,101 @@ void main() {
     expect(foods.single.name, 'Apple');
   });
 
+  test('returns an active food by id', () async {
+    final timestamp = DateTime.utc(2026, 7, 22, 12);
+
+    final insertedId = await database.foodDao.insertFood(
+      name: 'Apple',
+      caloriesPerServing: 52,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    );
+
+    final food = await database.foodDao.getActiveFoodById(insertedId);
+
+    expect(food, isNotNull);
+    expect(food!.id, insertedId);
+    expect(food.name, 'Apple');
+    expect(food.caloriesPerServing, 52);
+    expect(food.deletedAt, isNull);
+  });
+
+  test('updates an active food', () async {
+    final createdAt = DateTime.utc(2026, 7, 22, 10);
+    final updatedAt = DateTime.utc(2026, 7, 22, 12);
+
+    final insertedId = await database.foodDao.insertFood(
+      name: 'Apple',
+      caloriesPerServing: 52.0,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+    );
+    final affectedRows = await database.foodDao.updateFood(
+      id: insertedId,
+      name: 'Updated Apple',
+      caloriesPerServing: 60.0,
+      servingLabel: 'updated serving',
+      updatedAt: updatedAt,
+    );
+
+    expect(affectedRows, 1);
+
+    final food = await database.foodDao.getActiveFoodById(insertedId);
+
+    expect(food, isNotNull);
+    expect(food!.name, 'Updated Apple');
+    expect(food.caloriesPerServing, 60.0);
+    expect(food.servingLabel, 'updated serving');
+    expect(food.createdAt.isAtSameMomentAs(createdAt), isTrue);
+    expect(food.updatedAt.isAtSameMomentAs(updatedAt), isTrue);
+  });
+
+  test('returns zero when updating a missing food', () async {
+    final affectedRows = await database.foodDao.updateFood(
+      id: 999,
+      name: 'Missing Food',
+      caloriesPerServing: 100,
+      servingLabel: '1 item',
+      updatedAt: DateTime.utc(2026, 7, 22, 12),
+    );
+
+    expect(affectedRows, 0);
+  });
+
+  test('rejects updating a food to a duplicate name', () async {
+    final timestamp = DateTime.utc(2026, 7, 22, 12);
+
+    await database.foodDao.insertFood(
+      name: 'Apple',
+      caloriesPerServing: 52,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    );
+
+    final bananaId = await database.foodDao.insertFood(
+      name: 'Banana',
+      caloriesPerServing: 89,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    );
+
+    await expectLater(
+      database.foodDao.updateFood(
+        id: bananaId,
+        name: 'apple',
+        caloriesPerServing: 89,
+        servingLabel: '100 g',
+        updatedAt: timestamp.add(const Duration(hours: 1)),
+      ),
+      throwsA(isA<SqliteException>()),
+    );
+
+    final banana = await database.foodDao.getActiveFoodById(bananaId);
+
+    expect(banana, isNotNull);
+    expect(banana!.name, 'Banana');
+  });
+
   tearDown(() async {
     await database.close();
   });

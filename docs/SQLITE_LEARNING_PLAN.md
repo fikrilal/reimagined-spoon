@@ -11,26 +11,38 @@ migrations, and performance well enough to explain and debug them.
 
 ## Current Position
 
-- The Flutter form and in-memory food list work.
-- Form validation and controller disposal are implemented.
-- Navigation returns a validated `FoodModel` to `HomePage`.
-- A GetX `FoodController`, reactive list, and route binding exist.
-- The reactive migration must be completed by removing the remaining `setState`
-  dependency and proving that `Obx` rebuilds the list.
-- GetX and `sqflite` are installed.
-- SQLite schema, migrations, repositories, and queries are not implemented.
+- Drift and SQLite are the persisted source of truth for foods.
+- `FoodController` coordinates the food UI with `FoodDao`; food data survives a
+  full application restart.
+- The database is at schema version 6 and has generated snapshots for versions
+  1 through 6.
+- `foods` and `meal_entries` include database constraints, soft deletion,
+  historical meal snapshots, and explicit foreign-key behavior.
+- `MealEntryDao` can atomically create a meal entry from a food and query entries
+  within a half-open UTC time range.
+- Automated migration tests verify all supported version paths and focused data
+  preservation across versions 1→2, 3→4, 4→5, and 5→6.
+- A release APK was installed over an older signed APK to verify that the real
+  Android update path preserves and migrates the existing database.
+- Full food CRUD/search, aggregate queries, rollback tests, and query-plan
+  evidence remain incomplete.
 
-## Immediate GetX Timebox
+## Immediate SQLite Checkpoint
 
-Spend no more than 15 minutes completing the current GetX checkpoint:
+Complete query and transaction fundamentals before adding another schema
+version:
 
-1. Remove the remaining `setState` around `FoodController.addFood`.
-2. Confirm that `Obx` updates the empty state and list.
-3. Remove duplicate and unused imports.
-4. Run `flutter analyze` and record the result.
-5. Preserve the checkpoint in source control when the intended files are staged.
+1. Add food lookup by identifier.
+2. Add food update and verify its affected-row count.
+3. Add soft delete and prove active-food queries exclude deleted rows.
+4. Add case-insensitive, parameterized food-name search.
+5. Add daily and per-category calorie aggregate queries.
+6. Force a transactional write to fail and prove that every write rolls back.
+7. Compare `EXPLAIN QUERY PLAN` output for the meal-date query with and without
+   the `meal_entries_consumed_at` index.
 
-Do not add more GetX abstractions before starting SQLite.
+Do not add another migration unless a real schema requirement appears. Advanced
+syntax is useful only after these behaviors are correct and tested.
 
 ## Learning Principles
 
@@ -62,10 +74,12 @@ Use tests, deliberate failure cases, `PRAGMA` inspection, and
 
 ## Dependencies
 
-The intended Flutter dependencies are:
+The implemented database dependencies are:
 
-- `sqflite` for platform SQLite access
-- `path` for constructing the database path
+- `drift` for typed tables, queries, DAOs, and migration APIs
+- `drift_flutter` for opening the Flutter database connection
+- `drift_dev` and `build_runner` for generated code, schema snapshots, and
+  migration tooling
 
 Dependencies imported directly by application code should be declared directly
 in `pubspec.yaml`, even when another package currently brings them transitively.
@@ -81,59 +95,71 @@ foods
 ├── name
 ├── calories_per_serving
 ├── created_at
-└── updated_at
+├── updated_at
+├── deleted_at
+└── serving_label
 
 meal_entries
 ├── id
 ├── food_id
-├── servings
-├── meal_type
+├── food_name_snapshot
+├── calories_per_serving_snapshot
+├── serving_quantity
+├── meal_category
 ├── consumed_at
 └── created_at
 
 foods 1 ─────── N meal_entries
 ```
 
-## Decisions Required Before DDL
+`meal_entries.food_id` is nullable and uses `ON DELETE SET NULL`. Name and
+calorie snapshots preserve historical meaning even when the current food is
+edited or removed.
 
-Record the answers in `DECISIONS.md` before treating the schema as final.
+## Implemented Schema Decisions
+
+The rationale and consequences of durable choices belong in `DECISIONS.md`.
 
 ### Duplicate Names
 
-Decide whether food names are unique and whether uniqueness is case-sensitive.
-For example, determine whether `Apple` and `apple` represent the same food.
+Food names are trimmed, non-empty, unique, and compared with SQLite `NOCASE`.
+Therefore `Apple` and `apple` represent the same logical food. The limitation is
+that SQLite's built-in `NOCASE` behavior is primarily ASCII-oriented.
 
 ### Numeric Rules
 
-Decide whether calories may equal zero or must be greater than zero. Decide the
-valid range for servings.
+Calories may equal zero but cannot be negative. Meal-entry serving quantity must
+be greater than zero. Dart validation remains responsible for rejecting
+non-finite values before they reach SQLite.
 
 ### Delete Behavior
 
-Choose what happens to meal entries when their referenced food is deleted:
+The implemented relationship uses:
 
-- `RESTRICT`: prevent deletion while history references the food
-- `CASCADE`: delete the related history
-- `SET NULL`: preserve history without the active food reference
+- Soft deletion for ordinary food removal through `foods.deleted_at`.
+- `SET NULL` if a food row is physically deleted.
+- Snapshots on meal entries so historical names and calories remain stable.
 
-The choice must match the product behavior, not convenience.
+This behavior must be tested before physical deletion is exposed through the UI.
 
 ### Historical Values
 
-Decide whether editing a food's calories should change historical daily totals.
-If history must remain stable, a meal entry needs a snapshot of the relevant
-food values at the time it is recorded.
+Editing a food must not change historical daily totals. A meal entry therefore
+stores the food name and calories-per-serving values that existed when it was
+recorded.
 
 ### Time Representation
 
-Choose how timestamps are stored, for example UTC epoch integers or normalized
-ISO-8601 text. Document how local calendar days are derived from the stored value.
+With the current Drift configuration, `DateTimeColumn` values are stored as
+integer timestamps. Application writes and day boundaries are normalized to UTC,
+then queried as a half-open range:
+`startInclusive <= consumedAt < endExclusive`.
 
 ### Meal Category
 
-Decide whether meal categories are constrained text values or a separate table.
-For this one-week project, constrained text is sufficient unless categories must
-be user-configurable.
+Meal categories are constrained text values: `breakfast`, `lunch`, `dinner`,
+and `snack`. A separate lookup table is unnecessary unless categories become
+user-configurable.
 
 ## Schema Requirements
 
@@ -249,22 +275,53 @@ reader and a documented tradeoff.
 
 ### Version 1
 
-Create the smallest schema that supports food persistence and CRUD.
+Created the initial `foods` table.
 
 ### Version 2
 
-Add meal entries, their relationship, constraints, and required indexes.
+Added `meal_entries`, including its nullable food relationship, historical
+snapshots, numeric constraints, meal-category constraint, and timestamps.
 
-### Migration Exercise
+### Version 3
 
-1. Install or create a version-1 database with existing food rows.
-2. Upgrade to version 2 without deleting the database.
-3. Verify that version-1 data remains available.
-4. Verify the new schema using SQLite metadata or `PRAGMA` queries.
-5. Verify foreign-key and index behavior.
+Added nullable `foods.deleted_at` to support soft deletion.
+
+### Version 4
+
+Added the `meal_entries_consumed_at` index for time-range queries.
+
+### Version 5
+
+Added non-null `foods.serving` with a valid default so existing rows could be
+backfilled safely.
+
+### Version 6
+
+Renamed `foods.serving` to `foods.serving_label` while preserving existing
+values.
+
+### Completed Migration Exercise
+
+1. Generated immutable Drift schema snapshots for versions 1 through 6.
+2. Used `stepByStep` migration callbacks for every adjacent version.
+3. Validated every supported old-to-new schema path automatically.
+4. Added focused data-integrity tests for migrations that introduce or transform
+   important data.
+5. Installed a newer release APK over an existing signed APK without clearing
+   application data.
+6. Confirmed that old rows remained available after the first database open.
 
 Never use uninstalling the app or deleting the database as the migration
-strategy.
+strategy. A released schema snapshot is historical evidence and must not be
+edited to resemble the latest schema.
+
+`dart run drift_dev make-migrations` is run after an intentional table or column
+change and a `schemaVersion` increment. It generates the new snapshot and step
+scaffolding; the developer must still implement and test the migration logic.
+
+For a manual APK update, Android also requires the same application ID and
+signing certificate, plus a higher `versionCode`. Database migration happens
+when the updated application opens the database, not while the APK is copied.
 
 ## Flutter Integration Boundaries
 
@@ -275,8 +332,8 @@ Widget
   ↓ user intent and rendering
 FoodController
   ↓ application state and async coordination
-FoodRepository
-  ↓ food persistence operations and SQL ownership
+FoodDao / MealEntryDao
+  ↓ typed persistence operations and query ownership
 AppDatabase
   ↓ connection, schema version, creation, migration
 SQLite
@@ -291,17 +348,17 @@ SQLite
 - Schema version upgrades
 - Connection lifecycle
 
-### FoodRepository Owns
+### DAOs Own
 
-- Food CRUD SQL
+- Food and meal-entry persistence operations
 - Query parameters
-- Row-to-model mapping
-- Meaningful persistence errors
+- Typed Drift result mapping
+- Transaction boundaries that protect one logical write
 
 ### FoodController Owns
 
 - Loading, populated, and failure state presented to the UI
-- Coordinating repository calls
+- Coordinating DAO calls
 - Updating reactive state only after persistence succeeds
 
 ### Widgets Own
@@ -314,19 +371,27 @@ Widgets must not execute SQL directly.
 
 ## Implementation Order
 
-1. Complete the small GetX checkpoint.
-2. Decide schema behavior and record decisions.
-3. Write and inspect version-1 DDL.
-4. Implement `AppDatabase` creation and version handling.
-5. Implement food row mapping.
-6. Implement and test food CRUD in `FoodRepository`.
-7. Load repository data through `FoodController`.
-8. Prove persistence across a full application restart.
-9. Add version-2 meal-entry schema through a migration.
-10. Implement join and aggregate queries.
-11. Add transaction failure tests.
-12. Measure important queries and add justified indexes.
-13. Attempt CTE and window-function exercises after version verification.
+Completed:
+
+1. Defined schema rules and recorded the initial food decisions.
+2. Implemented Drift database creation and version handling.
+3. Persisted food insertion and active-food listing through `FoodDao`.
+4. Loaded persisted data through `FoodController`.
+5. Proved persistence across restart.
+6. Added the meal-entry relationship and transactional snapshot insertion.
+7. Evolved and tested schema versions 1 through 6.
+8. Verified the v5→v6 upgrade through the release APK installation path.
+
+Next:
+
+1. Complete food CRUD and search DAO behavior with focused tests.
+2. Implement and test join and aggregate queries for a local calendar day.
+3. Add transaction failure and rollback tests.
+4. Measure the meal-date query and justify the existing index with query-plan
+   evidence.
+5. Connect meal logging and summaries to GetX and Flutter.
+6. Attempt a useful CTE or window-function exercise only after the preceding
+   behavior is complete.
 
 ## Verification Checklist
 
@@ -358,9 +423,11 @@ Widgets must not execute SQL directly.
 
 ### Migrations
 
-- Existing version-1 data survives the version-2 upgrade.
-- The migration is tested without deleting the database.
+- Every supported old-to-new schema path validates successfully.
+- Focused tests prove important values survive column additions and renames.
+- The migration is tested without deleting application data.
 - New constraints, foreign keys, and indexes are verified.
+- The release upgrade uses the same application ID and signing certificate.
 
 ### Performance
 
@@ -370,26 +437,24 @@ Widgets must not execute SQL directly.
 
 ## Compressed Schedule
 
-### Session 1: Schema and Food Persistence
+### Completed: Schema, Persistence, and Migration Reliability
 
-- Finish GetX timebox
-- Make and record schema decisions
-- Implement version-1 food schema
-- Implement food CRUD
-- Verify restart persistence
+- Created the relational schema and Drift integration
+- Verified restart persistence
+- Added schema versions 1 through 6
+- Added generated and data-integrity migration tests
+- Verified a manual release APK upgrade
 
-### Session 2: Relationships and Aggregates
+### Next Session: CRUD, Search, and Aggregates
 
-- Add version-2 migration
-- Add meal-entry relationship
-- Practise joins and daily aggregates
-- Verify foreign-key behavior
+- Complete food lookup, update, soft delete, and search
+- Practise joins and daily aggregates using meal snapshots
+- Verify foreign-key and soft-delete behavior
 
-### Session 3: Reliability and Performance
+### Final SQLite Session: Reliability and Performance
 
 - Practise transaction commit and rollback
-- Inspect query plans
-- Add justified indexes
+- Inspect the indexed and unindexed query plans
 - Practise CTE and window queries where supported
 
 ## Exit Criteria
